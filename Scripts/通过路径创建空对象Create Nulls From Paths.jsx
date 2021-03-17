@@ -1,8 +1,12 @@
 /*
-    Create Nulls From Paths.jsx v.0.5
+    Create Nulls From Paths.jsx v.0.6
     Attach nulls to shape and mask vertices, and vice-versa.
 
-    Changes:
+    Changes 0.6:
+        - Nulls are now created above the selected layer.
+        - Loop optimizations
+
+    Changes 0.5:
         - wraps it all in an IIFE
         - fixes call to missing method array.indexOf
 */
@@ -174,7 +178,7 @@
                 return
             }
 
-            for (var p = 0; p < selectedPaths.length; p++) {
+            for (var p = 0, pl = selectedPaths.length; p < pl; p++) {
                     doSomething(comp,parentLayers[p],selectedPaths[p]);
             }
 
@@ -193,6 +197,7 @@
                 var nullName = selectedLayer.name + ": " + path.parentProperty.name + " [" + pathHierarchy.join(".") + "." + i + "]";
                 if(comp.layer(nullName) == undefined){
                     var newNull = createNull(comp);
+                    newNull.moveBefore(selectedLayer);
                     newNull.position.setValue(pathPoints[i]);
                     newNull.position.expression =
                             "var srcLayer = thisComp.layer(\"" + selectedLayer.name + "\"); \r" +
@@ -226,6 +231,7 @@
 
                     //Create nulls
                     var newNull = createNull(comp);
+                    newNull.moveBefore(selectedLayer);
                     // Null layer name
                     newNull.name = nullName;
                     newNull.label = 11;
@@ -251,7 +257,7 @@
             });
 
             // Add new layer control effects for each null
-            for(var n = 0; n < nullSet.length;n++){
+            for(var n = 0, nl = nullSet.length; n < nl; n++){
                 if(existingEffects.join("|").indexOf(nullSet[n]) != -1){ //If layer control effect exists, relink it to null
                     selectedLayer.property("ADBE Effect Parade")(nullSet[n]).property("ADBE Layer Control-0001").setValue(comp.layer(nullSet[n]).index);
                 } else {
@@ -269,13 +275,13 @@
                         "var origInTang = origPath.inTangents(); \r" +
                         "var origOutTang = origPath.outTangents(); \r" +
                         "var getNullLayers = []; \r" +
-                        "for (var i = 0; i < nullLayerNames.length; i++){ \r" +
+                        "for (var i = 0, il = nullLayerNames.length; i < il; i++){ \r" +
                         "    try{  \r" +
                         "        getNullLayers.push(effect(nullLayerNames[i])(\"ADBE Layer Control-0001\")); \r" +
                         "    } catch(err) { \r" +
                         "        getNullLayers.push(null); \r" +
                         "    }} \r" +
-                        "for (var i = 0; i < getNullLayers.length; i++){ \r" +
+                        "for (var i = 0, il = getNullLayers.length; i < il; i++){ \r" +
                         "    if (getNullLayers[i] != null && getNullLayers[i].index != thisLayer.index){ \r" +
                         "        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  \r" +
                         "    }} \r" +
@@ -298,6 +304,7 @@
 
             // Create tracer null
             var newNull = createNull(comp);
+            newNull.moveBefore(selectedLayer);
 
             // Add expression control effects to the null
             var nullControl = newNull.property("ADBE Effect Parade").addProperty("Pseudo/ADBE Trace Path");
